@@ -1,23 +1,38 @@
+const ConnectedList = require("./connected-list");
 
-class Sockets{
+class Sockets {
 
-    constructor( io ){
-        this.io = io ;
-
+    constructor(io) {
+        this.io = io;
+        this.usersConnected = new ConnectedList();
         this.socketEvents();
     }
 
-    socketEvents(){
+    socketEvents() {
         // On connection
         this.io.on('connection', (socket) => {  // socket = cliente que se conecto
+            //console.log('cliente conectado', socket.id);
 
-            //el servidor escucha al cliente y emite el mensaje en la consola del servidor
-            socket.on('mensaje-to-server', (data) => { //on => Escucha
-                console.log(data);
-                //el servidor notifique a todos los clientes
-                //socket.emit('mensaje-from-server', data); // lo emite al socket que disparo el mensaje
-                this.io.emit('mensaje-from-server', data); // lo emite a todos los conectados
+
+            socket.on('unirse-sala', (room, idUser) => {
+                //console.log(room, idUser);
+                this.usersConnected.addConnected(idUser, room, socket.id);
+                socket.join(room);
+                this.io.to(room).emit('user-connected',this.usersConnected.getConnected().filter( user => user.diagramId == room ));
+                //console.log();
             });
+
+            socket.on('send-diagram', (datagrama, room) => {
+                this.io.to(room).emit('diagram-updated',datagrama);
+            });
+
+            socket.on('disconnect', () => {
+                this.usersConnected.getRoom(socket.id);
+                this.usersConnected.getUserId(socket.id);
+                this.usersConnected.removeConnected( socket.id );
+                this.io.to(this.usersConnected.diagramId).emit('user-disconnected', this.usersConnected.userId);
+            });
+
         });
 
     }
