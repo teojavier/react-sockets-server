@@ -26,6 +26,7 @@ class Sockets {
                 this.io.to(room).emit('diagram-updated',datagrama);
             });
 
+            //comentario
             socket.on('disconnect', () => {
                 this.usersConnected.getRoom(socket.id);
                 this.usersConnected.getUserId(socket.id);
